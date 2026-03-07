@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Air Juggler using TensorFlow.js - Gesture-Controlled Game
 
 A beginner-friendly tutorial project that teaches TensorFlow.js and MediaPipe Hands through building an interactive gesture-controlled game.
@@ -155,3 +156,6 @@ Built as part of the [Codédex Project Tutorials](https://www.codedex.io/project
 ## License
 
 MIT License - Feel free to use this code for learning and teaching!
+=======
+# Webcam-Gesture-Controlled-Games
+>>>>>>> d9b14674b0acea7c36de8febe5d26abc41c08141
