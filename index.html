@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
+        <link rel="stylesheet" href="style.css"/>
+    </head>
+    <body>
+        <div class="container">
+            <h1 id="title">Gesture-Controlled Games</h1>
+            <p id="instructions">Click on a game to start playing!</p>
+
+            <div id="gameSelector">
+                <button class="gameBtn" id="switchBtn-airJ" data-game="airJuggler">Air Juggler</button>
+                <button class="gameBtn" id="switchBtn-animalM" data-game="animalMatch">Animal Match</button>
+            </div>
+
+            <div id="AirJugglerGame" style="display: none;">
+                <div class="gameInfo">
+                    <div class="gameTitle"></div>
+                    <div class="gameInstruction"></div>
+                </div>
+
+                <div class="canvasWrapper">
+                    <video id="webcam-airJ" autoplay playsinline></video>
+                    <canvas id="gameCanvas-airJ" width="768" height="512"></canvas>
+
+                    <div id="overlay-airJ" class="overlay">
+                        <h2 id="overlayMessage-airJ">Ready to Play?</h2>
+                        <button id="startButton-airJ">Start Game</button>
+                    </div>
+                </div>
+
+                <div class="scoreDisplay"></div>
+            </div>
+
+            <div id="AnimalMatchGame" style="display: none;">
+                <div class="gameInfo">
+                    <div class="gameTitle"></div>
+                    <div class="gameInstruction"></div>
+                </div>
+
+                <div class="canvasWrapper">
+                    <video id="webcam-animalM" autoplay playsinline></video>
+                    <canvas id="gameCanvas-animalM" width="768" height="512"></canvas>
+
+                    <div id="overlay-animalM" class="overlay">
+                        <h2 id="overlayMessage-animalM">Ready to Play?</h2>
+                        <button id="startButton-animalM">Start Game</button>
+                    </div>
+                </div>
+
+                <div class="scoreDisplay"></div>
+            </div>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="loader"></div>
+                <h2>Loading TensorFlow.js</h2>
+                <p id="loadingStatus">Initializing models...</p>
+            </div>
+        </div>
+
+        <script>
+            const gameData = {
+                airJuggler: {
+                    name: "Air Juggler",
+                    id: "AirJugglerGame",
+                    file: "airJuggler.js",
+                    instructions: "Use your hands to keep the ball in the air!",
+                    scoreTemp: 'Time: <span id="score">0</span>s',
+                },
+                animalMatch: {
+                    name: "Animal Match",
+                    id: "AnimalMatchGame",
+                    file: "animalMatch.js",
+                    instructions: "Use your index or middle finger to match the corresponding pair!",
+                    scoreTemp: 'Moves: <span id="move">0</span> | Pairs: <span id="pairs">0/8</span>',
+                }
+            }
+
+            const title = document.getElementById("title");
+            const instructions = document.getElementById("instructions");
+
+            function resetGameContainer(gameId) {
+                const container = document.getElementById(gameId);
+                if (!container) {
+                    return;
+                }
+
+                const overlay = container.querySelector(".overlay");
+                if (overlay) {
+                    overlay.classList.remove("hidden");
+
+                    const startBtn = overlay.querySelector("button");
+                    if (startBtn) {
+                        startBtn.textContent = "Start Game";
+                    }
+                }
+                const event = new CustomEvent("resetGame");
+                container.dispatchEvent(event);
+            }
+
+            document.querySelectorAll(".gameBtn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const gameKey = this.dataset.game;
+                    const game = gameData[gameKey];
+
+                    document.getElementById("gameSelector").classList.add("game-active");
+
+                    document.querySelectorAll(".gameBtn").forEach(gameBtn => {
+                        if (gameBtn.dataset.game === gameKey) {
+                            gameBtn.style.display = "none";
+                        } else {
+                            gameBtn.style.display = "block";
+                        }
+                    })
+
+                    if (window.handTracking && window.handTracking.resetGame) {
+                        window.handTracking.resetGame();
+                    }
+
+                    document.getElementById("AirJugglerGame").style.display = "none";
+                    document.getElementById("AnimalMatchGame").style.display = "none";
+
+                    const gameContainer = document.getElementById(game.id);
+                    gameContainer.style.display = "block";
+
+                    gameContainer.querySelector(".gameTitle").textContent = game.name;
+                    gameContainer.querySelector(".gameInstruction").textContent = game.instructions;
+                    gameContainer.querySelector(".scoreDisplay").innerHTML = game.scoreTemp;
+
+                    if (title) {
+                        title.style.display = "none";
+                    }
+
+                    if (instructions) {
+                        instructions.style.display = "none";
+                    }
+
+                    resetGameContainer(game.id);
+                })
+            })
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
+
+        <script src="handTracking.js"></script>
+        <script src="./games/airJuggler.js"></script>
+        <script src="./games/animalMatch.js"></script>
+    </body>
+</html>
