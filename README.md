@@ -36,7 +36,7 @@ cd Webcam-Gesture-Controlled-Games
 
 <!-- ![Air Juggler Demo](demo.gif) -->
 
-## How to Play
+### How to Play
 
 1. **Click "Start Game"** - Wait for the ML model to load (~2-3 seconds)
 2. **Move your hands** - Position your hands in front of the camera
@@ -53,7 +53,7 @@ cd Webcam-Gesture-Controlled-Games
 
 <!-- ![Animal Match Demo](demo.gif) -->
 
-## How to Play
+### How to Play
 
 1. **Click "Start Game"** - Wait for the ML model to load (~2-3 seconds)
 2. **Use your fingertip (index or middle finger)** - Position your finger in front of the camera
