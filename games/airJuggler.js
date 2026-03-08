@@ -1,5 +1,4 @@
 (function() {
-  // Game configuration
   const config = {
     ballCount: 1,
     ballRadius: 20,
@@ -9,7 +8,6 @@
     countdownTime: 3,
   };
 
-  // Game state
   let gameState = {
     balls: [],
     hands: [],
@@ -22,35 +20,30 @@
     isActive: false,
   };
 
-  // Canvas setup
   const canvas = document.getElementById("gameCanvas-airJ");
   const ctx = canvas.getContext("2d");
   const webcam = document.getElementById("webcam-airJ");
 
-  // UI elements
   const overlay = document.getElementById("overlay-airJ");
   const startButton = document.getElementById("startButton-airJ");
   const overlayMessage = document.getElementById("overlayMessage-airJ");
   const loadingOverlay = document.getElementById("loadingOverlay");
   const loadingStatus = document.getElementById("loadingStatus");
 
-  // Hide the raw video element - we only want to see the canvas
+  // Raw element stays hidden since video feed is drawn to canvas instead
   webcam.style.display = "none";
 
-  // Register this game with handTracking
   window.handTracking.registerGame("airJuggler", function receiveHands(hands) {
     if (gameState.isActive) {
       gameState.hands = hands;
     }
   });
 
-  // Listen for reset event from parent
   document.getElementById("AirJugglerGame").addEventListener("resetGame", function() {
     if (gameState.animationId) {
       cancelAnimationFrame(gameState.animationId);
     }
 
-    // Reset to start screen
     gameState.isActive = false;
     gameState.balls = [];
 
@@ -64,34 +57,30 @@
     gameState.balls = [];
     for (let i = 0; i < config.ballCount; i++) {
       gameState.balls.push({
-        x: canvas.width / 2, // Start in center
+        x: canvas.width / 2,
         y: 100,
-        vx: 0, // No initial horizontal velocity
-        vy: 0, // No initial vertical velocity
+        vx: 0,
+        vy: 0,
         radius: config.ballRadius,
         color: `hsl(${i * 120}, 70%, 60%)`,
       });
     }
   }
 
-  // Update ball physics
   function updateBalls() {
     gameState.balls.forEach((ball) => {
-      // Apply gravity
       ball.vy += config.gravity;
-
-      // Update position
       ball.x += ball.vx;
       ball.y += ball.vy;
 
-      // Bounce off left/right walls
+      // Reverse horizontal direction when collided with left/right wall
       if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
         ball.vx *= -1;
         ball.x =
           ball.x < canvas.width / 2 ? ball.radius : canvas.width - ball.radius;
       }
 
-      // Bounce off top
+      // Reverse vertical direction when collided with ceiling
       if (ball.y - ball.radius < 0) {
         ball.vy *= -1;
         ball.y = ball.radius;
@@ -110,6 +99,7 @@
           ball.vy = config.bounceVelocity;
           ball.vx += dx * 0.1;
 
+          // Bounce the ball when collided with the outside hand radius to prevent sticking
           const angle = Math.atan2(dy, dx);
           ball.x = hand.x + Math.cos(angle) * (ball.radius + config.handRadius);
           ball.y = hand.y + Math.sin(angle) * (ball.radius + config.handRadius);
@@ -133,10 +123,9 @@
   }
 
   function render() {
-    // Clear canvas first
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw video background
+    // Mirror webcam feed horizontally to match the correct hand movement
     if (gameState.isActive && webcam && webcam.srcObject && webcam.readyState === webcam.HAVE_ENOUGH_DATA) {
       ctx.save();
       ctx.scale(-1, 1);
@@ -159,7 +148,7 @@
       });
     }
 
-    // Draw hand zones
+    // Draw hand zones around each tracked hand
     gameState.hands.forEach((hand, index) => {
       ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
       ctx.lineWidth = 4;
@@ -214,7 +203,6 @@
       }
     }
 
-    render();
     gameState.animationId = requestAnimationFrame(gameLoop);
   }
 
@@ -224,7 +212,7 @@
       cancelAnimationFrame(gameState.animationId);
     }
 
-    // Set this as active game
+    // Set this as the active game
     window.handTracking.setActiveGame("airJuggler");
 
     // Reset game state completely for a fresh start
@@ -259,7 +247,7 @@
 
         window.handTrackingInitialized = true;
     } else {
-        // Subsequent times: just point tracking at this game's video element
+        // Resign stream to this game's video element when switching games
         loadingOverlay.classList.remove("hidden");
         loadingStatus.textContent = "Switching camera...";
 
@@ -268,7 +256,7 @@
         loadingOverlay.classList.add("hidden");
     }
 
-    // Always restart detection (resetGame() stopped it)
+    // Always restart detection since resetGame() (game switch) stopped it
     window.handTracking.startDetection();
 
     overlay.classList.add("hidden");
@@ -293,8 +281,6 @@
     `;
     startButton.textContent = "Play Again";
     overlay.classList.remove("hidden");
-
-    render();
   }
 
   if (startButton) {
@@ -303,13 +289,11 @@
     console.error("Air Juggler startButton not found!");
   }
 
-  // Check if TensorFlow.js is loaded
+  // Check if TensorFlow.js is loaded before allowing user to play
   function checkTensorFlowLoaded() {
     if (typeof tf !== "undefined" && typeof handPoseDetection !== "undefined") {
-      // TensorFlow.js and dependencies loaded
       loadingOverlay.classList.add("hidden");
     } else {
-      // Check again after a short delay
       setTimeout(checkTensorFlowLoaded, 100);
     }
   }
@@ -323,6 +307,7 @@
 
   window.startAirjuggler = startGame;
 
+  // Runs independently from gameLoop to keep canvas updated on the start and end screens
   function renderLoop() {
       render();
       requestAnimationFrame(renderLoop);

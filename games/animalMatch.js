@@ -1,5 +1,4 @@
 (function() {
-    // Game configuration
     const config = {
         rows: 4,
         columns: 4,
@@ -10,7 +9,6 @@
         HOVER_DWELL_MS: 800,
     }
 
-    // Game state
     let gameState = {
         cards: [],
         hands: [],
@@ -28,23 +26,21 @@
         hoverStartTime: null,
     };
 
-    // Canvas setup
+    const symbols = ["🐶", "🐻", "🐭", "🐰", "🐷", "🦊", "🐯", "🐱"]
+
     const canvas = document.getElementById("gameCanvas-animalM");
     const ctx = canvas.getContext("2d");
     const webcam = document.getElementById("webcam-animalM");
-    const symbols = ["🐶", "🐻", "🐭", "🐰", "🐷", "🦊", "🐯", "🐱"]
 
-    // UI elements
     const overlay = document.getElementById("overlay-animalM");
     const startButton = document.getElementById("startButton-animalM");
     const overlayMessage = document.getElementById("overlayMessage-animalM");
     const loadingOverlay = document.getElementById("loadingOverlay");
     const loadingStatus = document.getElementById("loadingStatus");
 
-    // Hide the raw video element
+    // Raw element stays hidden since video feed is drawn to canvas instea
     webcam.style.display = "none";
 
-    // Register this game with handTracking
     window.handTracking.registerGame("animalMatch", function receiveHands(hands) {
         if (gameState.isActive) {
             gameState.hands = hands;
@@ -57,7 +53,6 @@
             cancelAnimationFrame(gameState.animationId);
         }
 
-        // Reset to start screen
         gameState.isActive = false;
         gameState.cards = [];
 
@@ -71,7 +66,7 @@
         gameState.cards = [];
         const pairs = [...symbols, ...symbols];
 
-        // Randomize cards location
+        // Fisher-Yates shuffle for random card placement
         for (let i = pairs.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
@@ -95,6 +90,7 @@
         }
     }
 
+    // Returns the card under the fingertip (if none, then null)
     function checkCardSelection(hand) {
         if (!gameState.canSelect || !hand) return null;
 
@@ -119,7 +115,9 @@
 
         gameState.moves++;
         const moveDisplay = document.getElementById("move");
-        if (moveDisplay) moveDisplay.textContent = gameState.moves;
+        if (moveDisplay) {
+            moveDisplay.textContent = gameState.moves
+        };
         
         card.isFlipped = true;
 
@@ -130,6 +128,7 @@
         
         gameState.canSelect = false;
         
+        // Delay before flipping unmatched cards back so players have time to see them
         setTimeout(() => {
             const firstCard = gameState.selectedCard;
             const secondCard = card;
@@ -160,7 +159,7 @@
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw video background
+        // Mirror webcam feed horizontally to match the correct movement
         if (gameState.isActive && webcam && webcam.srcObject && webcam.readyState === webcam.HAVE_ENOUGH_DATA) {
             ctx.save();
             ctx.scale(-1, 1);
@@ -174,6 +173,7 @@
         gameState.cards.forEach(card => {
             if (card.isMatched) ctx.globalAlpha = 0.5;
             
+            // Highlight the card that's currently being hovered
             const isHovered = gameState.hoverCard?.id === card.id;
 
             if (card.isFlipped || card.isMatched) {
@@ -220,7 +220,7 @@
             ctx.stroke();
         }
         
-        // Draw fingertip cursor
+        // Draw fingertip cursor when finger is extended
         if (gameState.isActive && gameState.hands[0]) {
             const hand = gameState.hands[0];
             const tip = hand.fingerTips?.index;
@@ -264,7 +264,7 @@
 
             if (hoveredCard) {
                 if (gameState.hoverCard?.id === hoveredCard.id) {
-                    // Same card — check if dwell time has passed
+                    // Same card — trigger card selection once dwell time is completed
                     const elapsed = Date.now() - gameState.hoverStartTime;
                     if (elapsed >= config.HOVER_DWELL_MS && gameState.canSelect) {
                         handleCardSelection(hoveredCard);
@@ -272,12 +272,11 @@
                         gameState.hoverStartTime = null;
                     }
                 } else {
-                    // Newly hovered card — start dwell timer
                     gameState.hoverCard = hoveredCard;
                     gameState.hoverStartTime = Date.now();
                 }
             } else {
-                // No card hovered — clear hover state
+                // New card found - start dwell timer
                 gameState.hoverCard = null;
                 gameState.hoverStartTime = null;
             }
@@ -286,7 +285,6 @@
             gameState.hoverStartTime = null;
         }
 
-        render();
         gameState.animationId = requestAnimationFrame(gameLoop);
     }
 
@@ -297,6 +295,7 @@
             cancelAnimationFrame(gameState.animationId);
         }
 
+        // Set this as the active game
         window.handTracking.setActiveGame("animalMatch");
 
         // Reset game state completely for a fresh start
@@ -345,6 +344,7 @@
 
             window.handTrackingInitialized = true;
         } else {
+            // Resign stream to this game's video element when switching games
             loadingOverlay.classList.remove("hidden");
             loadingStatus.textContent = "Switching camera...";
 
@@ -353,7 +353,7 @@
             loadingOverlay.classList.add("hidden");
         }
 
-        // Always restart detection
+        // Always restart detection since resetGame() (game switch) stopped it
         window.handTracking.startDetection();
         
         overlay.classList.add('hidden');
@@ -388,6 +388,7 @@
         console.error("startButton-animalM not found");
     }
 
+    // Check if TensorFlow.js is loaded before allowing user to play
     function checkTensorFlowLoaded() {
         if (typeof tf !== "undefined" && typeof handPoseDetection !== "undefined") {
             loadingOverlay.classList.add("hidden");
@@ -396,6 +397,7 @@
         }
     }
 
+    // Start checking once DOM is loaded
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", checkTensorFlowLoaded);
     } else {
@@ -404,6 +406,7 @@
 
     window.startAnimalMatch = startGame;
 
+    // Runs independently from gameLoop to keep canvas updated on the start and end screens
     function renderLoop() {
         render();
         requestAnimationFrame(renderLoop);
