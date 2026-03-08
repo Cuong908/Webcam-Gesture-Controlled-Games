@@ -272,11 +272,12 @@
                         gameState.hoverStartTime = null;
                     }
                 } else {
+                    // New card found - start dwell timer
                     gameState.hoverCard = hoveredCard;
                     gameState.hoverStartTime = Date.now();
                 }
             } else {
-                // New card found - start dwell timer
+                // No card hovered — clear hover state
                 gameState.hoverCard = null;
                 gameState.hoverStartTime = null;
             }
@@ -344,7 +345,7 @@
 
             window.handTrackingInitialized = true;
         } else {
-            // Resign stream to this game's video element when switching games
+            // Reassign stream to this game's video element when switching games
             loadingOverlay.classList.remove("hidden");
             loadingStatus.textContent = "Switching camera...";
 

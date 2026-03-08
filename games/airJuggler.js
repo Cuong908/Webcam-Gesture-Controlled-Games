@@ -247,7 +247,7 @@
 
         window.handTrackingInitialized = true;
     } else {
-        // Resign stream to this game's video element when switching games
+        // Reassign stream to this game's video element when switching games
         loadingOverlay.classList.remove("hidden");
         loadingStatus.textContent = "Switching camera...";
 
